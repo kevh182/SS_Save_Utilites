@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import os
 from collections import namedtuple
 
@@ -46,7 +44,47 @@ def deinterleave(data):
         return data[1::2]
     return data
 
-file_path = "saves/bup-int-[MK-81804] DEEP FEAR.bin"
+# returns the language based on the langId
+def get_language(lang_id):
+
+    if lang_id == 0:
+        return "Japanese"
+    elif lang_id == 1:
+        return "English"
+    elif lang_id == 2:
+        return "Francais"
+    elif lang_id == 3:
+        return "Deutsch"
+    elif lang_id == 4:
+        return "Espanol"
+    elif lang_id == 5:
+        return "Italiano"
+
+    # language not found
+    return None
+
+# returns the langId based on the language
+def get_lang_id(language):
+
+    language = language.lower()
+
+    if language == "japanese":
+        return 0
+    if language == "english":
+        return 1
+    if language == "francais":
+        return 2
+    if language == "deutsch":
+        return 3
+    if language == "espanol":
+        return 4
+    if language == "italiano":
+        return 5
+
+    # language not found
+    return None
+
+file_path = "saves/Deep Fear (USA) (Unl).sav"
 file_size = os.path.getsize(file_path)
 
 # 32kb unpadded save file found
@@ -61,9 +99,14 @@ if file_size== SAVE_FILE_SIZE:
 
         name_string = str(save_name, "ascii")
         comment_string = str(comment, "shift_jis")
+        f32.seek(0x9A)
+        lang_id = f32.read(1)[0]
 
-        print("Save Name:" + name_string)
-        print("Comment:" + comment_string)
+        language = get_language(lang_id)
+
+        print(name_string)
+        print(comment_string)
+        print(language)
 
 # 64kb "0xFF" or "0x00" padded save file found
 elif file_size == PAD_SAVE_FILE_SIZE:
