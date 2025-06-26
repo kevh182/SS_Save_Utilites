@@ -19,7 +19,7 @@ def read_until_null_byte(source, offset):
       2) a plain bytes/bytearray (using slicing)
     Stops on 0x00 or 0x01, returns the bytes before that.
     """
-    # case A: file‐like object
+    # file‐like object
     if hasattr(source, "read") and hasattr(source, "seek"):
         source.seek(offset)
         result = bytearray()
@@ -30,7 +30,7 @@ def read_until_null_byte(source, offset):
             result.extend(b)
         return bytes(result)
 
-    # case B: bytes or bytearray
+    # bytes or bytearray
     data = source  # assume bytes-like
     result = bytearray()
     for b in data[offset:]:
@@ -39,6 +39,7 @@ def read_until_null_byte(source, offset):
         result.append(b)
     return bytes(result)
 
+# Remove the padded bytes: "0xFF" or "0x00"
 def deinterleave(data):
     dummy = data[::2]
     if all(b in (0xFF, 0x00) for b in dummy):
