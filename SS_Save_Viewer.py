@@ -1,131 +1,39 @@
 import os
-from collections import namedtuple
+from utils_test import *
+from Save_Reader_Test import *
+
+MAX_SAVE_NAME_LENGTH = 12
+MAX_SAVE_COMMENT_LENGTH = 11
 
 SAVE_FILE_SIZE = 32768
+SAVE_FILE_WITH_RAM_CART = 557056
 PAD_SAVE_FILE_SIZE = 65536
+PAD_SAVE_FILE_WITH_RAM_CART = 1114112
 
-SaturnSaveEntry = namedtuple("SaturnSaveEntry", [
-    # original physical slot (unused for display)
-    "Slot", "Name", "Comment", "Language", "Date", "Blocks", "Size"
-])
+BACKUP_RAM_HEADER = "BackUpRam Format" * 4
+BUP_HEADER = "Vmem"
 
+file_name = "path\to\save\file"
 
-def read_until_null_byte(source, offset):
-    """
-    Read bytes from either
-      1) a file-like object (with .seek()/.read()), or
-      2) a plain bytes/bytearray (using slicing)
-    Stops on 0x00 or 0x01, returns the bytes before that.
-    """
-    # file‐like object
-    if hasattr(source, "read") and hasattr(source, "seek"):
-        source.seek(offset)
-        result = bytearray()
-        while True:
-            b = source.read(1)
-            if not b or b[0] in (0x00, 0x01):
-                break
-            result.extend(b)
-        return bytes(result)
+CHUNK_SIZE = 64
+SAVE_PATTERN = b"\x80\x00\x00\x00"
 
-    # bytes or bytearray
-    data = source  # assume bytes-like
-    result = bytearray()
-    for b in data[offset:]:
-        if b in (0x00, 0x01):
-            break
-        result.append(b)
-    return bytes(result)
+file_size = os.path.getsize(file_name)
 
-# Remove the padded bytes: "0xFF" or "0x00"
-def deinterleave(data):
-    dummy = data[::2]
-    if all(b in (0xFF, 0x00) for b in dummy):
-        return data[1::2]
-    return data
+if __name__ == '__main__':
 
-# returns the language based on the langId
-def get_language(lang_id):
+    # 32kb unpadded save file
+    if file_size == SAVE_FILE_SIZE or file_size == SAVE_FILE_WITH_RAM_CART:
+        read_save_data()
 
-    if lang_id == 0:
-        return "Japanese"
-    elif lang_id == 1:
-        return "English"
-    elif lang_id == 2:
-        return "Francais"
-    elif lang_id == 3:
-        return "Deutsch"
-    elif lang_id == 4:
-        return "Espanol"
-    elif lang_id == 5:
-        return "Italiano"
+    # 64kb 0xFF padded save file
+    elif file_size == PAD_SAVE_FILE_SIZE or file_size == PAD_SAVE_FILE_WITH_RAM_CART:
 
-    # language not found
-    return None
+        cleaned_temp_file = remove_alternating_ff_to_tempfile(file_name)
 
-# returns the langId based on the language
-def get_lang_id(language):
+        if cleaned_temp_file:
 
-    language = language.lower()
+            read_pad_save_data(cleaned_temp_file)
 
-    if language == "japanese":
-        return 0
-    if language == "english":
-        return 1
-    if language == "francais":
-        return 2
-    if language == "deutsch":
-        return 3
-    if language == "espanol":
-        return 4
-    if language == "italiano":
-        return 5
-
-    # language not found
-    return None
-
-file_path = "saves/Deep Fear (USA) (Unl).sav"
-file_size = os.path.getsize(file_path)
-
-# 32kb unpadded save file found
-if file_size== SAVE_FILE_SIZE:
-
-    print("32kb file found")
-
-    with open(file_path, "rb") as f32:
-
-        save_name = read_until_null_byte(f32, 0x84)
-        comment = read_until_null_byte(f32, 0x90)
-
-        name_string = str(save_name, "ascii")
-        comment_string = str(comment, "shift_jis")
-        f32.seek(0x9A)
-        lang_id = f32.read(1)[0]
-
-        language = get_language(lang_id)
-
-        print(name_string)
-        print(comment_string)
-        print(language)
-
-# 64kb "0xFF" or "0x00" padded save file found
-elif file_size == PAD_SAVE_FILE_SIZE:
-
-    print("64kb file found")
-
-    # open file as binary and store it in file buffer.
-    in_file = open(file_path, "rb")
-    tmp_buf = in_file.read()
-    in_file.close()
-
-    # de-interleave down to 32 KB
-    f64 = deinterleave(tmp_buf)
-
-    save_name = read_until_null_byte(f64, 0x84)
-    comment = read_until_null_byte(f64, 0x90)
-
-    name_string = str(save_name, "ascii")
-    comment_string = str(comment, "shift_jis")
-
-    print("Save Name:" + name_string)
-    print("Comment:" + comment_string)
+        else:
+            print("Error:Could not create the temporary file or process the input file.")
