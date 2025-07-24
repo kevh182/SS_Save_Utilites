@@ -1,6 +1,6 @@
 import tempfile
 import os
-from SS_Save_Viewer_Test import *
+from SS_Save_Viewer import *
 
 def read_save_data():
 
