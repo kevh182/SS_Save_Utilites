@@ -1,6 +1,6 @@
 import os
-from utils_test import *
-from Save_Reader_Test import *
+from utils import *
+from Save_Reader import *
 
 MAX_SAVE_NAME_LENGTH = 12
 MAX_SAVE_COMMENT_LENGTH = 11
@@ -13,7 +13,7 @@ PAD_SAVE_FILE_WITH_RAM_CART = 1114112
 BACKUP_RAM_HEADER = "BackUpRam Format" * 4
 BUP_HEADER = "Vmem"
 
-file_name = "path\to\save\file"
+file_name = "path\\to\\save\\file"
 
 CHUNK_SIZE = 64
 SAVE_PATTERN = b"\x80\x00\x00\x00"
